@@ -1,5 +1,5 @@
 import React from "react";
-import MediaCarousel from "@/components/product/MediaCarousel";
+import MediaCarousel from "@/components/product/MediaCarousel"; // Updated
 import PriceFormat_Sale from "@/components/commerce-ui/price-format-sale";
 import ProductReviewSection from "@/components/sections/reviews";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,7 @@ export async function generateMetadata(
   const { id } = await params;
   
   try {
-    // Use absolute URL with environment variable
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/product/${id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/product/${id}`, {
       next: { revalidate: 3600 }
     });
     
@@ -37,6 +35,7 @@ export async function generateMetadata(
     const product = await response.json();
 
     const previousImages = (await parent).openGraph?.images || [];
+    // Get first image from media array
     const firstMedia = product.media?.find((item: any) => item._type === 'image');
     const productImage = firstMedia?.asset?.url || '';
 
@@ -52,7 +51,7 @@ export async function generateMetadata(
       openGraph: {
         title: product.name,
         description: product.description || `${product.name} available for purchase`,
-        url: `${baseUrl}/product/${id}`,
+        url: `${process.env.NEXT_PUBLIC_BASE_URL}/product/${id}`,
         type: "website",
         images: productImage ? [productImage, ...previousImages] : previousImages,
         ...(product.price && {
@@ -78,7 +77,7 @@ export async function generateMetadata(
         }),
       },
       alternates: {
-        canonical: `${baseUrl}/product/${id}`,
+        canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/product/${id}`,
       },
     };
   } catch (error) {
@@ -93,20 +92,15 @@ const ProductPage = async ({ params }: Props) => {
   const { id } = await params;
   
   let product = null;
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-
   try {
-    // Use the environment variable consistently
-    const response = await fetch(`${baseUrl}/api/product/${id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/product/${id}`, {
       next: { revalidate: 3600 }
     });
     
     if (response.ok) {
       product = await response.json();
-    } else {
-      console.error(`Failed to fetch product: ${response.status} ${response.statusText}`);
     }
-    console.log(product);
+    console.log(product)
   } catch (error) {
     console.error('Failed to fetch product:', error);
   }
@@ -139,7 +133,7 @@ const ProductPage = async ({ params }: Props) => {
     }),
     offers: {
       "@type": "Offer",
-      url: `${baseUrl}/product/${id}`,
+      url: `${process.env.NEXT_PUBLIC_BASE_URL}/product/${id}`,
       priceCurrency: "INR",
       price: product.salesPrice || product.price,
       priceValidUntil: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString().split('T')[0],
