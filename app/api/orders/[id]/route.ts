@@ -1,12 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { sanityClient } from "@/lib/sanity";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await the params
+    const { id } = await params;
+    
     const supabase = await getSupabaseServerClient();
     
     // Get current user
@@ -20,7 +23,7 @@ export async function GET(
     }
 
     // Get user profile to get email
-    const { data: userData } :any= await supabase
+    const { data: userData } :any = await supabase
       .from('users')
       .select('email')
       .eq('id', user.id)
@@ -33,12 +36,9 @@ export async function GET(
       );
     }
 
-    const orderId =await params.id;
-
-    // FIXED: Use proper GROQ syntax without emphasis issues
-    // Break the query into parts or use a different approach
+    // Fix: Use the id directly, not orderId.id
     const order = await sanityClient.fetch(
-      `*[_type == "order" && _id == $orderId.id && resellerEmail == $email][0] {
+      `*[_type == "order" && _id == $orderId && resellerEmail == $email][0] {
         _id,
         customerName,
         phoneNumber,
@@ -77,7 +77,7 @@ export async function GET(
         }
       }`,
       { 
-        orderId: orderId,
+        orderId: id, // Fixed: use id directly
         email: userData.email 
       }
     );
